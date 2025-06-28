@@ -1,0 +1,3 @@
+# FastAPI 서버 실행 명령
+
+uvicorn backend.backend_code:app --reload --host 0.0.0.0 --port 8080

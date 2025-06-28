@@ -134,10 +134,38 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
     return {"id": user.id, "email": user.email, "role": user.role, "name": user.name}
 
 # --- 로그인 ---
+from fastapi import Form
 @app.post("/api/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+async def login(
+    request: Request,
+    db: Session = Depends(get_db),
+    username: str = Form(None),
+    password: str = Form(None),
+):
+    # 1. Form 방식 우선 처리
+    if username and password:
+        user = db.query(User).filter(User.email == username).first()
+        if not user or not verify_password(password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
+        token = create_access_token({
+            "sub": str(user.id),
+            "email": user.email,
+            "role": user.role,
+            "name": user.name,
+        })
+        return {"token": token}
+    # 2. JSON 방식도 허용
+    try:
+        data = await request.json()
+        username = data.get("username") or data.get("email")
+        password = data.get("password")
+    except Exception:
+        username = None
+        password = None
+    if not username or not password:
+        raise HTTPException(status_code=401, detail="username, password 필수")
+    user = db.query(User).filter(User.email == username).first()
+    if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다.")
     token = create_access_token({
         "sub": str(user.id),

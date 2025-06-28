@@ -13,5 +13,5 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # 서버 실행 (백그라운드)
-nohup uvicorn backend_code:app --host 0.0.0.0 --port 8080 --reload > server.log 2>&1 &
+nohup uvicorn backend_code:app --host 0.0.0.0 --port 8080 --reload &
 echo "서버가 백그라운드에서 실행 중입니다. (로그: backend/server.log)"

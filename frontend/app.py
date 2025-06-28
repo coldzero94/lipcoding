@@ -328,8 +328,33 @@ if __name__ == "__main__":
         /* 기존 스타일 유지, mentor-card 텍스트도 검정 */
         .mentor-card {transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s; color: #222 !important;}
         .mentor-card:hover {transform: scale(1.035) translateY(-2px); box-shadow:0 8px 32px #0002; z-index:2;}
-        .pretty-btn {background: linear-gradient(90deg,#6C63FF,#48C6EF); color:#fff; border:none; border-radius:0; padding:8px 22px; font-weight:600; font-size:16px; box-shadow:0 2px 8px #0002; cursor:pointer; transition:background 0.2s,box-shadow 0.2s; margin:6px 0;}
-        .pretty-btn:hover {background: linear-gradient(90deg,#48C6EF,#6C63FF); box-shadow:0 4px 16px #0003;}
+        /* 버튼: 자연스럽고 미니멀하게, 은은한 반투명+블러, 검정 텍스트, 부드러운 그림자 */
+        .pretty-btn, button, .stButton>button {
+            background: rgba(255,255,255,0.55) !important;
+            color: #222 !important;
+            border: 1.5px solid #bbb !important;
+            border-radius: 8px !important;
+            padding: 10px 26px !important;
+            font-weight: 600 !important;
+            font-size: 1.05rem !important;
+            box-shadow: 0 2px 8px #0001 !important;
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s, border 0.18s;
+            margin: 8px 0 !important;
+            opacity: 1 !important;
+            backdrop-filter: blur(4px) saturate(1.1);
+        }
+        .pretty-btn:hover, button:hover, .stButton>button:hover {
+            background: rgba(255,255,255,0.75) !important;
+            border: 1.5px solid #6C63FF !important;
+            color: #222 !important;
+            box-shadow: 0 4px 16px #6C63FF22 !important;
+            opacity: 1 !important;
+        }
+        /* 버튼 텍스트, 아이콘 등도 항상 검정 */
+        .pretty-btn *, button *, .stButton>button * {
+            color: #222 !important;
+        }
         .img-preview {border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px #0003; width:90px; margin:8px 0;}
         .section-title {font-size:1.3rem; font-weight:700; margin:18px 0 10px 0; letter-spacing:-1px; color:#6C63FF;}
         .divider {height:1px; background:linear-gradient(90deg,#6C63FF22,#48C6EF44,#6C63FF22); border:none; margin:18px 0 12px 0;}

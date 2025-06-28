@@ -7,6 +7,8 @@
 import streamlit as st
 import requests
 import base64
+from streamlit_lottie import st_lottie
+import json
 
 API_URL = "http://localhost:8080/api"
 
@@ -24,8 +26,18 @@ def api_headers():
 def toast(msg, icon="✅"):
     st.toast(msg, icon=icon)
 
+def load_lottie_url(url):
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()
+    except Exception:
+        return None
+    return None
+
 # --- 회원가입/로그인 폼 ---
 def login_signup_ui():
+    st_lottie(load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json"), height=180, key="main_lottie")
     st.title("멘토-멘티 매칭 서비스 🤝")
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
     with tab1:
@@ -125,9 +137,16 @@ def mentor_list_ui():
     cols = st.columns(2)
     for idx, m in enumerate(mentors):
         with cols[idx % 2]:
-            st.markdown(f"### {m['profile']['name']} ({', '.join(m['profile']['skills'])})")
-            st.image(f"{API_URL}/images/mentor/{m['id']}", width=150)
-            st.write(m['profile']['bio'])
+            st.markdown(f'''
+                <div style="background: linear-gradient(90deg,#6C63FF,#48C6EF); padding:18px 16px 12px 16px; border-radius:18px; box-shadow:0 4px 16px #0002; margin-bottom:18px; color:white;">
+                    <h4 style="margin-bottom:4px;">✨ {m['profile']['name']}</h4>
+                    <span style="font-size:13px; opacity:0.8;">{', '.join(m['profile']['skills'])}</span>
+                    <div style="margin:8px 0;">
+                        <img src='{API_URL}/images/mentor/{m['id']}' width='90' style='border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px #0003;'>
+                    </div>
+                    <div style="font-size:14px;">{m['profile']['bio']}</div>
+                </div>
+            ''', unsafe_allow_html=True)
             if st.session_state.user['role'] == "mentee":
                 if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}"):
                     with st.form(f"req_form_{m['id']}"):

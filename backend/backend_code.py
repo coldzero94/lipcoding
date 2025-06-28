@@ -249,7 +249,20 @@ def update_profile(
         current_user.skills = ",".join(req.skills or [])
     db.commit()
     db.refresh(current_user)
-    return {"result": "ok"}
+    # 명세에 맞는 전체 유저 정보 반환
+    profile = {
+        "name": current_user.name,
+        "bio": current_user.bio,
+        "imageUrl": f"/api/images/{current_user.role}/{current_user.id}",
+    }
+    if current_user.role == "mentor":
+        profile["skills"] = current_user.skills.split(",") if current_user.skills else []
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "role": current_user.role,
+        "profile": profile,
+    }
 
 # --- 프로필 이미지 제공 ---
 @app.get("/api/images/{role}/{user_id}")
@@ -447,3 +460,23 @@ def cancel_request(req_id: int, current_user: User = Depends(get_current_user), 
         "message": req.message,
         "status": req.status,
     }
+
+from fastapi.exception_handlers import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError as FastAPIRequestValidationError
+from pydantic import ValidationError as PydanticValidationError
+from starlette.requests import Request as StarletteRequest
+
+@app.exception_handler(FastAPIRequestValidationError)
+async def validation_exception_handler(request: StarletteRequest, exc: FastAPIRequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )
+
+@app.exception_handler(PydanticValidationError)
+async def pydantic_validation_exception_handler(request: StarletteRequest, exc: PydanticValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )

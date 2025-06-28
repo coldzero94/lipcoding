@@ -213,7 +213,7 @@ def mentor_list_ui():
                 else:
                     if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}", help="멘토에게 매칭 요청을 보냅니다."):
                         st.session_state.requesting_mentor_id = m['id']
-                        st.experimental_rerun()
+                        st.rerun()
 
 # --- 매칭 요청 목록 ---
 def match_requests_ui():

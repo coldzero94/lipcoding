@@ -205,6 +205,10 @@ def mentor_list_ui():
                             st.write(f"멘토ID: {m['id']}, 멘티ID: {st.session_state.user['id']}")  # 로그창에 출력
                             r2 = requests.post(f"{API_URL}/match-requests", json=payload, headers=api_headers())
                             if r2.status_code == 200:
+                                # 화려한 안내: Lottie + Balloon + 컬러 메시지
+                                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=120, key=f"req_success_{m['id']}")
+                                st.markdown('<div style="background:linear-gradient(90deg,#6C63FF,#48C6EF);color:#fff;padding:18px 20px 14px 20px;border-radius:18px;font-size:1.2rem;font-weight:700;box-shadow:0 4px 16px #0002;margin-bottom:12px;display:flex;align-items:center;gap:12px;">🎉 <span>멘토링 요청이 <span style="color:#FFD600;">성공적으로</span> 전송되었습니다!</span> 🚀</div>', unsafe_allow_html=True)
+                                st.balloons()
                                 toast("요청이 전송되었습니다!", "📨")
                                 st.session_state.requesting_mentor_id = None
                                 st.rerun()
@@ -261,6 +265,18 @@ def match_requests_ui():
             st.info("보낸 매칭 요청이 없습니다.")
         for req in data:
             st.markdown(f"멘토ID: <b>{req['mentorId']}</b> | 상태: {status_badge(req['status'])}", unsafe_allow_html=True)
+            # 상태별 화려한 안내 메시지
+            if req['status'] == "accepted":
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=90, key=f"accepted_{req['id']}")
+                st.markdown('<div style="background:linear-gradient(90deg,#00C853,#48C6EF);color:#fff;padding:14px 18px 12px 18px;border-radius:16px;font-size:1.1rem;font-weight:600;box-shadow:0 2px 8px #0002;margin-bottom:10px;display:flex;align-items:center;gap:10px;">🎊 <span>멘토링 매칭이 <span style="color:#FFD600;">성공</span>했습니다! 멘토와 함께 멋진 경험을 시작해보세요 🙌</span></div>', unsafe_allow_html=True)
+                st.balloons()
+            elif req['status'] == "rejected":
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=80, key=f"rejected_{req['id']}")
+                st.markdown('<div style="background:linear-gradient(90deg,#D50000,#757575);color:#fff;padding:14px 18px 12px 18px;border-radius:16px;font-size:1.05rem;font-weight:500;box-shadow:0 2px 8px #0002;margin-bottom:10px;display:flex;align-items:center;gap:10px;">❌ <span>아쉽게도 매칭이 거절되었습니다.<br>다른 멘토에게 다시 도전해보세요!</span></div>', unsafe_allow_html=True)
+                st.snow()
+            elif req['status'] == "cancelled":
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_3rwasyjy.json", height=70, key=f"cancelled_{req['id']}")
+                st.markdown('<div style="background:linear-gradient(90deg,#757575,#90A4AE);color:#fff;padding:12px 16px 10px 16px;border-radius:14px;font-size:1.02rem;font-weight:500;box-shadow:0 1px 4px #0001;margin-bottom:8px;display:flex;align-items:center;gap:8px;">🗑️ <span>매칭 요청이 취소되었습니다.</span></div>', unsafe_allow_html=True)
             if req['status'] == "pending":
                 if st.button("요청 취소", key=f"cancel_{req['id']}"):
                     r2 = requests.delete(f"{API_URL}/match-requests/{req['id']}", headers=api_headers())
@@ -288,17 +304,28 @@ if __name__ == "__main__":
     # --- 글로벌 스타일: 카드/버튼/섹션 구분 CSS ---
     st.markdown('''
         <style>
-        /* 멘토 카드 hover 효과 */
+        /* 전체 배경: 감성 멀티 컬러 그라데이션 (보라-파랑-민트-노랑) */
+        body, .stApp {
+            background: linear-gradient(135deg, #6C63FF 0%, #48C6EF 40%, #43E97B 70%, #FFD600 100%) !important;
+            background-attachment: fixed !important;
+        }
+        /* 카드/폼 완전 투명+블러 효과, 그림자 최소화, 경계 제거 */
+        .mentor-card, .stForm, .stTextInput, .stTextArea, .stRadio, .stButton, .stSelectbox, .stFileUploader, .stSidebar, .stAlert, .stMarkdown, .stToast {
+            background: rgba(255,255,255,0.32) !important;
+            backdrop-filter: blur(10px) saturate(1.2);
+            box-shadow: 0 2px 8px #0001 !important;
+            border: none !important;
+        }
+        .mentor-card, .stForm, .stTextInput, .stTextArea, .stRadio, .stButton, .stSelectbox, .stFileUploader, .stSidebar, .stAlert, .stMarkdown, .stToast {
+            border-radius: 22px !important;
+        }
+        /* 기존 스타일 유지 */
         .mentor-card {transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;}
-        .mentor-card:hover {transform: scale(1.035) translateY(-2px); box-shadow:0 8px 32px #0003; z-index:2;}
-        /* 버튼 스타일 */
+        .mentor-card:hover {transform: scale(1.035) translateY(-2px); box-shadow:0 8px 32px #0002; z-index:2;}
         .pretty-btn {background: linear-gradient(90deg,#6C63FF,#48C6EF); color:#fff; border:none; border-radius:16px; padding:8px 22px; font-weight:600; font-size:16px; box-shadow:0 2px 8px #0002; cursor:pointer; transition:background 0.2s,box-shadow 0.2s; margin:6px 0;}
         .pretty-btn:hover {background: linear-gradient(90deg,#48C6EF,#6C63FF); box-shadow:0 4px 16px #0003;}
-        /* 프로필 이미지 미리보기 */
         .img-preview {border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px #0003; width:90px; margin:8px 0;}
-        /* 섹션 헤더 */
         .section-title {font-size:1.3rem; font-weight:700; margin:18px 0 10px 0; letter-spacing:-1px; color:#6C63FF;}
-        /* 구분선 */
         .divider {height:1px; background:linear-gradient(90deg,#6C63FF22,#48C6EF44,#6C63FF22); border:none; margin:18px 0 12px 0;}
         </style>
     ''', unsafe_allow_html=True)

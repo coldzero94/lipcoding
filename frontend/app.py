@@ -35,9 +35,37 @@ def load_lottie_url(url):
         return None
     return None
 
+def status_badge(status):
+    color = {
+        "pending": "#FFD600",
+        "accepted": "#00C853",
+        "rejected": "#D50000",
+        "cancelled": "#757575"
+    }.get(status, "#90A4AE")
+    emoji = {
+        "pending": "⏳",
+        "accepted": "✅",
+        "rejected": "❌",
+        "cancelled": "🗑️"
+    }.get(status, "🔖")
+    label = {
+        "pending": "대기중",
+        "accepted": "수락됨",
+        "rejected": "거절됨",
+        "cancelled": "취소됨"
+    }.get(status, status)
+    return f"<span style='background:{color};color:#222;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:600;display:inline-block;margin-left:8px;'>{emoji} {label}</span>"
+
+def lottie_anim(url, height=120, key=None):
+    anim = load_lottie_url(url)
+    if anim:
+        st_lottie(anim, height=height, key=key)
+    else:
+        st.markdown("<div style='color:#888;text-align:center;font-size:16px;'>⚠️ 애니메이션 로드 실패</div>", unsafe_allow_html=True)
+
 # --- 회원가입/로그인 폼 ---
 def login_signup_ui():
-    st_lottie(load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json"), height=180, key="main_lottie")
+    lottie_anim("https://assets2.lottiefiles.com/packages/lf20_0yfsb3a1.json", height=180, key="main_lottie")
     st.title("멘토-멘티 매칭 서비스 🤝")
     tab1, tab2 = st.tabs(["로그인", "회원가입"])
     with tab1:
@@ -50,9 +78,11 @@ def login_signup_ui():
                 r = requests.post(f"{API_URL}/login", data=data)
                 if r.status_code == 200:
                     st.session_state.token = r.json()["token"]
+                    lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=90, key="login_success")
                     toast("로그인 성공!", "🎉")
                     st.rerun()
                 else:
+                    lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=90, key="login_fail")
                     st.error(r.json().get("detail", "로그인 실패"))
     with tab2:
         with st.form("signup_form"):
@@ -65,14 +95,17 @@ def login_signup_ui():
                 data = {"email": email, "password": pw, "name": name, "role": role}
                 r = requests.post(f"{API_URL}/signup", json=data)
                 if r.status_code == 201:
+                    lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=90, key="signup_success")
                     toast("회원가입 성공! 로그인 해주세요.", "🎉")
                 else:
+                    lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=90, key="signup_fail")
                     st.error(r.json().get("detail", "회원가입 실패"))
 
 # --- 내 정보/프로필 ---
 def profile_ui():
     r = requests.get(f"{API_URL}/me", headers=api_headers())
     if r.status_code != 200:
+        lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=90, key="auth_fail")
         st.error("인증 오류. 다시 로그인 해주세요.")
         st.session_state.token = None
         st.session_state.user = None
@@ -85,43 +118,49 @@ def profile_ui():
     if st.sidebar.button("로그아웃", use_container_width=True):
         st.session_state.token = None
         st.session_state.user = None
+        lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=80, key="logout_anim")
         st.rerun()
-    st.header("내 프로필 ✨")
+    st.markdown('<div class="section-title">내 프로필 ✨</div>', unsafe_allow_html=True)
     with st.form("profile_form"):
         name = st.text_input("이름", value=user['profile']['name'])
         bio = st.text_area("소개", value=user['profile']['bio'])
         img_file = st.file_uploader("프로필 이미지 (jpg/png, 1MB 이하)", type=["jpg", "png"])
+        if img_file:
+            img_bytes = img_file.read()
+            if len(img_bytes) > 1024*1024:
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=80, key="img_too_big")
+                st.error("이미지는 1MB 이하만 업로드 가능")
+                return
+            img_b64 = base64.b64encode(img_bytes).decode()
+            st.markdown(f'<img src="data:image/png;base64,{img_b64}" class="img-preview">', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<img src="{API_URL}/images/{user["role"]}/{user["id"]}" class="img-preview">', unsafe_allow_html=True)
         skills = []
         if user['role'] == "mentor":
             skills = st.text_input("기술 스택 (쉼표로 구분)", value=", ".join(user['profile'].get('skills', [])))
         submitted = st.form_submit_button("프로필 저장")
         if submitted:
-            img_b64 = None
-            if img_file:
-                img_bytes = img_file.read()
-                if len(img_bytes) > 1024*1024:
-                    st.error("이미지는 1MB 이하만 업로드 가능")
-                    return
-                img_b64 = base64.b64encode(img_bytes).decode()
             payload = {
                 "id": user["id"],
                 "name": name,
                 "role": user["role"],
                 "bio": bio,
-                "image": img_b64,
+                "image": img_b64 if img_file else None,
             }
             if user['role'] == "mentor":
                 payload["skills"] = [s.strip() for s in skills.split(",") if s.strip()]
             r2 = requests.put(f"{API_URL}/profile", json=payload, headers=api_headers())
             if r2.status_code == 200:
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=80, key="profile_save")
                 toast("프로필이 저장되었습니다!", "🎨")
                 st.rerun()
             else:
+                lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=80, key="profile_fail")
                 st.error(r2.json().get("detail", "프로필 저장 실패"))
 
 # --- 멘토 리스트/매칭 ---
 def mentor_list_ui():
-    st.header("멘토 리스트 👩‍💻👨‍💻")
+    st.markdown('<div class="section-title">멘토 리스트 👩‍💻👨‍💻</div>', unsafe_allow_html=True)
     skill = st.text_input("기술 스택으로 검색", key="search_skill")
     order = st.radio("정렬 기준", ["id", "name", "skill"], horizontal=True)
     params = {}
@@ -134,21 +173,22 @@ def mentor_list_ui():
         st.error("멘토 리스트를 불러올 수 없습니다.")
         return
     mentors = r.json()
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
     cols = st.columns(2)
     for idx, m in enumerate(mentors):
         with cols[idx % 2]:
             st.markdown(f'''
-                <div style="background: linear-gradient(90deg,#6C63FF,#48C6EF); padding:18px 16px 12px 16px; border-radius:18px; box-shadow:0 4px 16px #0002; margin-bottom:18px; color:white;">
+                <div class="mentor-card" style="background: linear-gradient(90deg,#6C63FF,#48C6EF); padding:18px 16px 12px 16px; border-radius:18px; box-shadow:0 4px 16px #0002; margin-bottom:18px; color:white; position:relative;">
                     <h4 style="margin-bottom:4px;">✨ {m['profile']['name']}</h4>
                     <span style="font-size:13px; opacity:0.8;">{', '.join(m['profile']['skills'])}</span>
                     <div style="margin:8px 0;">
-                        <img src='{API_URL}/images/mentor/{m['id']}' width='90' style='border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px #0003;'>
+                        <img src='{API_URL}/images/mentor/{m['id']}' width='90' class='img-preview'>
                     </div>
                     <div style="font-size:14px;">{m['profile']['bio']}</div>
                 </div>
             ''', unsafe_allow_html=True)
             if st.session_state.user['role'] == "mentee":
-                if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}"):
+                if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}", help="멘토에게 매칭 요청을 보냅니다."):
                     with st.form(f"req_form_{m['id']}"):
                         msg = st.text_area("요청 메시지", key=f"msg_{m['id']}")
                         submit = st.form_submit_button("요청 보내기")
@@ -173,28 +213,33 @@ def match_requests_ui():
         r = requests.get(f"{API_URL}/match-requests/incoming", headers=api_headers())
         st.subheader("들어온 요청")
         for req in r.json():
-            st.info(f"멘티ID: {req['menteeId']} | 메시지: {req['message']} | 상태: {req['status']}")
+            st.markdown(f"멘티ID: <b>{req['menteeId']}</b> | 메시지: {req['message']} | 상태: {status_badge(req['status'])}", unsafe_allow_html=True)
             if req['status'] == "pending":
                 c1, c2 = st.columns(2)
                 if c1.button("수락", key=f"accept_{req['id']}"):
                     r2 = requests.put(f"{API_URL}/match-requests/{req['id']}/accept", headers=api_headers())
                     if r2.status_code == 200:
+                        lottie_anim("https://assets2.lottiefiles.com/packages/lf20_4kx2q32n.json", height=70, key=f"accept_anim_{req['id']}")
                         toast("요청을 수락했습니다!", "👍")
+                        st.balloons()
                         st.rerun()
                 if c2.button("거절", key=f"reject_{req['id']}"):
                     r2 = requests.put(f"{API_URL}/match-requests/{req['id']}/reject", headers=api_headers())
                     if r2.status_code == 200:
+                        lottie_anim("https://assets2.lottiefiles.com/packages/lf20_2ks3pjua.json", height=70, key=f"reject_anim_{req['id']}")
                         toast("요청을 거절했습니다!", "❌")
+                        st.snow()
                         st.rerun()
     else:
         r = requests.get(f"{API_URL}/match-requests/outgoing", headers=api_headers())
         st.subheader("보낸 요청")
         for req in r.json():
-            st.info(f"멘토ID: {req['mentorId']} | 상태: {req['status']}")
+            st.markdown(f"멘토ID: <b>{req['mentorId']}</b> | 상태: {status_badge(req['status'])}", unsafe_allow_html=True)
             if req['status'] == "pending":
                 if st.button("요청 취소", key=f"cancel_{req['id']}"):
                     r2 = requests.delete(f"{API_URL}/match-requests/{req['id']}", headers=api_headers())
                     if r2.status_code == 200:
+                        lottie_anim("https://assets2.lottiefiles.com/packages/lf20_3rwasyjy.json", height=80, key=f"cancel_anim_{req['id']}")
                         toast("요청을 취소했습니다!", "🗑️")
                         st.rerun()
 
@@ -214,4 +259,21 @@ def main():
         match_requests_ui()
 
 if __name__ == "__main__":
+    # --- 글로벌 스타일: 카드/버튼/섹션 구분 CSS ---
+    st.markdown('''
+        <style>
+        /* 멘토 카드 hover 효과 */
+        .mentor-card {transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;}
+        .mentor-card:hover {transform: scale(1.035) translateY(-2px); box-shadow:0 8px 32px #0003; z-index:2;}
+        /* 버튼 스타일 */
+        .pretty-btn {background: linear-gradient(90deg,#6C63FF,#48C6EF); color:#fff; border:none; border-radius:16px; padding:8px 22px; font-weight:600; font-size:16px; box-shadow:0 2px 8px #0002; cursor:pointer; transition:background 0.2s,box-shadow 0.2s; margin:6px 0;}
+        .pretty-btn:hover {background: linear-gradient(90deg,#48C6EF,#6C63FF); box-shadow:0 4px 16px #0003;}
+        /* 프로필 이미지 미리보기 */
+        .img-preview {border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px #0003; width:90px; margin:8px 0;}
+        /* 섹션 헤더 */
+        .section-title {font-size:1.3rem; font-weight:700; margin:18px 0 10px 0; letter-spacing:-1px; color:#6C63FF;}
+        /* 구분선 */
+        .divider {height:1px; background:linear-gradient(90deg,#6C63FF22,#48C6EF44,#6C63FF22); border:none; margin:18px 0 12px 0;}
+        </style>
+    ''', unsafe_allow_html=True)
     main()

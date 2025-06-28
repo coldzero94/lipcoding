@@ -175,6 +175,9 @@ def mentor_list_ui():
     mentors = r.json()
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
     cols = st.columns(2)
+    # --- 멘토링 요청 폼 상태 관리 ---
+    if 'requesting_mentor_id' not in st.session_state:
+        st.session_state.requesting_mentor_id = None
     for idx, m in enumerate(mentors):
         with cols[idx % 2]:
             st.markdown(f'''
@@ -188,7 +191,8 @@ def mentor_list_ui():
                 </div>
             ''', unsafe_allow_html=True)
             if st.session_state.user['role'] == "mentee":
-                if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}", help="멘토에게 매칭 요청을 보냅니다."):
+                # 버튼을 누르면 해당 멘토에만 폼이 보이도록 상태 저장
+                if st.session_state.requesting_mentor_id == m['id']:
                     with st.form(f"req_form_{m['id']}"):
                         msg = st.text_area("요청 메시지", key=f"msg_{m['id']}")
                         submit = st.form_submit_button("요청 보내기")
@@ -198,12 +202,18 @@ def mentor_list_ui():
                                 "menteeId": st.session_state.user['id'],
                                 "message": msg,
                             }
+                            st.write(f"멘토ID: {m['id']}, 멘티ID: {st.session_state.user['id']}")  # 로그창에 출력
                             r2 = requests.post(f"{API_URL}/match-requests", json=payload, headers=api_headers())
                             if r2.status_code == 200:
                                 toast("요청이 전송되었습니다!", "📨")
+                                st.session_state.requesting_mentor_id = None
                                 st.rerun()
                             else:
                                 st.error(r2.json().get("detail", "요청 실패"))
+                else:
+                    if st.button(f"멘토링 요청하기 ({m['id']})", key=f"req_{m['id']}", help="멘토에게 매칭 요청을 보냅니다."):
+                        st.session_state.requesting_mentor_id = m['id']
+                        st.experimental_rerun()
 
 # --- 매칭 요청 목록 ---
 def match_requests_ui():

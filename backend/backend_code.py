@@ -53,6 +53,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 app = FastAPI(title="Mentor-Mentee API", docs_url="/swagger-ui", openapi_url="/openapi.json")
 
+@app.get("/openapi.json", include_in_schema=False)
+def custom_openapi():
+    return app.openapi()
+
+@app.get("/swagger-ui", include_in_schema=False)
+def custom_swagger():
+    return RedirectResponse(url="/docs")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

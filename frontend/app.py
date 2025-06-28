@@ -212,7 +212,15 @@ def match_requests_ui():
     if user['role'] == "mentor":
         r = requests.get(f"{API_URL}/match-requests/incoming", headers=api_headers())
         st.subheader("들어온 요청")
-        for req in r.json():
+        if r.status_code != 200:
+            st.error("매칭 요청을 불러오지 못했습니다.")
+            st.write(r.text)
+            return
+        data = r.json()
+        st.write(data)  # 실제 응답 확인용
+        if not data:
+            st.info("들어온 매칭 요청이 없습니다.")
+        for req in data:
             st.markdown(f"멘티ID: <b>{req['menteeId']}</b> | 메시지: {req['message']} | 상태: {status_badge(req['status'])}", unsafe_allow_html=True)
             if req['status'] == "pending":
                 c1, c2 = st.columns(2)
@@ -233,7 +241,15 @@ def match_requests_ui():
     else:
         r = requests.get(f"{API_URL}/match-requests/outgoing", headers=api_headers())
         st.subheader("보낸 요청")
-        for req in r.json():
+        if r.status_code != 200:
+            st.error("매칭 요청을 불러오지 못했습니다.")
+            st.write(r.text)
+            return
+        data = r.json()
+        st.write(data)  # 실제 응답 확인용
+        if not data:
+            st.info("보낸 매칭 요청이 없습니다.")
+        for req in data:
             st.markdown(f"멘토ID: <b>{req['mentorId']}</b> | 상태: {status_badge(req['status'])}", unsafe_allow_html=True)
             if req['status'] == "pending":
                 if st.button("요청 취소", key=f"cancel_{req['id']}"):

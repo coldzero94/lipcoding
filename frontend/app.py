@@ -309,20 +309,26 @@ if __name__ == "__main__":
             background: linear-gradient(135deg, #6C63FF 0%, #48C6EF 40%, #43E97B 70%, #FFD600 100%) !important;
             background-attachment: fixed !important;
         }
-        /* 카드/폼 완전 투명+블러 효과, 그림자 최소화, 경계 제거 */
+        /* 카드/폼/입력: 각지게, 텍스트 검정, 여백 넉넉하게, 투명+블러 */
         .mentor-card, .stForm, .stTextInput, .stTextArea, .stRadio, .stButton, .stSelectbox, .stFileUploader, .stSidebar, .stAlert, .stMarkdown, .stToast {
             background: rgba(255,255,255,0.32) !important;
             backdrop-filter: blur(10px) saturate(1.2);
             box-shadow: 0 2px 8px #0001 !important;
             border: none !important;
+            border-radius: 0 !important;
+            color: #222 !important;
+            padding: 12px 14px !important;
+            font-size: 1.05rem !important;
         }
-        .mentor-card, .stForm, .stTextInput, .stTextArea, .stRadio, .stButton, .stSelectbox, .stFileUploader, .stSidebar, .stAlert, .stMarkdown, .stToast {
-            border-radius: 22px !important;
+        /* 입력창 placeholder도 검정 */
+        input::placeholder, textarea::placeholder {
+            color: #222 !important;
+            opacity: 0.7 !important;
         }
-        /* 기존 스타일 유지 */
-        .mentor-card {transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;}
+        /* 기존 스타일 유지, mentor-card 텍스트도 검정 */
+        .mentor-card {transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s; color: #222 !important;}
         .mentor-card:hover {transform: scale(1.035) translateY(-2px); box-shadow:0 8px 32px #0002; z-index:2;}
-        .pretty-btn {background: linear-gradient(90deg,#6C63FF,#48C6EF); color:#fff; border:none; border-radius:16px; padding:8px 22px; font-weight:600; font-size:16px; box-shadow:0 2px 8px #0002; cursor:pointer; transition:background 0.2s,box-shadow 0.2s; margin:6px 0;}
+        .pretty-btn {background: linear-gradient(90deg,#6C63FF,#48C6EF); color:#fff; border:none; border-radius:0; padding:8px 22px; font-weight:600; font-size:16px; box-shadow:0 2px 8px #0002; cursor:pointer; transition:background 0.2s,box-shadow 0.2s; margin:6px 0;}
         .pretty-btn:hover {background: linear-gradient(90deg,#48C6EF,#6C63FF); box-shadow:0 4px 16px #0003;}
         .img-preview {border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px #0003; width:90px; margin:8px 0;}
         .section-title {font-size:1.3rem; font-weight:700; margin:18px 0 10px 0; letter-spacing:-1px; color:#6C63FF;}

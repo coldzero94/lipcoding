@@ -1,10 +1,5 @@
 # 천하제일 입코딩 대회 2025 - 멘토-멘티 매칭 앱
 
-<div align="center">
-  <img src="./images/hero.png" width="500" alt="천하제일입코딩대회 이미지">
-  <p style="font-size: 16pt; font-weight: bold;"><strong>제 1회 천하제일 입코딩대회 - 멘토-멘티 매칭 앱</strong></p>
-</div>
-
 ---
 
 ## 프로젝트 개요
@@ -86,9 +81,5 @@ python add_dummy_mentors.py
 
 ---
 
-<div align="center">
-  <img src="./images/submit.png" width="150" alt="앱 제출">
-  <br><br>
-  <b>앱 제출 마감: 2025년 6월 28일 17시</b>
-</div>
+**앱 제출 마감: 2025년 6월 28일 17시**
 
